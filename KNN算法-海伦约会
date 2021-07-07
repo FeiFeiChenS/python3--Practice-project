@@ -1,0 +1,78 @@
+#手写KNN算法
+
+import pandas as pd
+filepath=r"./datingTestSet.txt"
+testset=[[20000,5,0.3],[100,10,1],[30,100,0.1],[3000,0.1,0.1],[10000,5,1],[199,10,5],[5678,10,4]]     #测试数据集
+k=5
+
+def handledata(filepath):
+    dataset=pd.read_table(filepath,names=["flymiles","gametime","icecream","feeling"])
+    trainset=dataset[["flymiles","gametime","icecream"]].copy()
+    trainlable=dataset["feeling"].copy()
+    #处理标签
+    trainlable[trainlable=="didntLike"]=0
+    trainlable[trainlable=="smallDoses"]=1
+    trainlable[trainlable=="largeDoses"]=2
+    #训练集归一化处理
+    rangelist=[]
+    minlist=[]
+    for cindex in trainset.columns:
+        eachcol=trainset[cindex]
+        maxval=max(eachcol)
+        minval=min(eachcol)
+        rangelist.append(maxval-minval)
+        minlist.append(minval)
+        for i in range(len(eachcol)):
+            eachcol.loc[i]=(eachcol[i]-minval)/(maxval-minval)
+    return trainset,trainlable,rangelist,minlist
+
+def knnclassify(testset,trainset,trainlable,k,minlist,rangelist): #KNN分类器主体
+    prelable=[]
+    for item in testset:
+        for i in range(len(item)):
+            item[i]=(item[i]-minlist[i])/rangelist[i]
+        dic=((trainset-item)**2).sum(axis=1)
+        sortdic=dic.argsort()
+        judgelist=[]
+        for i in range(k):
+            index=sortdic[i]
+            judgelist.append(trainlable[index])
+        if judgelist.count(0)>judgelist.count(1) and judgelist.count(0)>judgelist.count(2):
+            prelable.append("didntLike")
+        elif judgelist.count(1)>judgelist.count(0) and judgelist.count(1)>judgelist.count(2):
+            prelable.append("smallDoses")
+        elif judgelist.count(2)>judgelist.count(0) and judgelist.count(2)>judgelist.count(1):
+            prelable.append("largeDoses")
+        else:
+            prelable.append("无法判断")
+    return prelable
+
+def main():
+    trainset,trainlable,rangelist,minlist=handledata(filepath)
+    prelable=knnclassify(testset,trainset,trainlable,k,minlist,rangelist)
+    print(prelable)
+                            
+
+if __name__=="__main__":
+    main()
+    
+    
+#利用sklearn实现KNN算法
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import tests
+import pandas as pd
+
+filepath=r"./datingTestSet.txt"
+testset=[[20000,5,0.3],[100,10,1],[30,100,0.1],[3000,0.1,0.1],[10000,5,1],[199,10,5],[5678,10,4]]     #测试数据集
+
+data=pd.read_table(filepath,names=["flymiles","ganmetime","icecream","feeling"])
+trainset=data[["flymiles","ganmetime","icecream"]].copy()
+tlable=data["feeling"].copy()
+
+#创建分类器
+myknn=KNeighborsClassifier(n_neighbors=5,weights='distance')  #初始化实例
+myknn.fit(trainset,tlable)
+
+#预测
+out=myknn.predict(testset)
+print(out)                    #预测的结果和手写代码不一样（1/s7），待验证
