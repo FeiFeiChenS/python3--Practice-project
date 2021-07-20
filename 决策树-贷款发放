@@ -1,0 +1,109 @@
+#机器学习之决策树算法
+from math import log
+dataSet = [[0, 0, 0, 0, 'no'],         #数据集、训练集
+            [0, 0, 0, 1, 'no'],
+            [0, 1, 0, 1, 'yes'],
+            [0, 1, 1, 0, 'yes'],
+            [0, 0, 0, 0, 'no'],
+            [1, 0, 0, 0, 'no'],
+            [1, 0, 0, 1, 'no'],
+            [1, 1, 1, 1, 'yes'],
+            [1, 0, 1, 2, 'yes'],
+            [1, 0, 1, 2, 'yes'],
+            [2, 0, 1, 2, 'yes'],
+            [2, 0, 1, 1, 'yes'],
+            [2, 1, 0, 1, 'yes'],
+            [2, 1, 0, 2, 'yes'],
+            [2, 0, 0, 0, 'no']]
+lables = ['年龄', '有工作', '有自己的房子', '信贷情况']          #分类标签
+
+
+#计算经验熵
+def JYshang(dataset):
+    labledic={}
+    lablelist=[]
+    HD=0
+    for fea in dataset:
+        lablelist.append(fea[-1])
+    
+    samptotal=len(lablelist)
+    for i in lablelist:
+        if i not in labledic.keys():
+            labledic[i]=0
+        labledic[i]+=1
+    for values in labledic.values():
+        HD -= values/samptotal*log(values/samptotal,2)
+    return HD
+
+#按照给定的特征划分数据集
+def splitdataset(dataset,axis,value):
+    retdataset=[]
+    for feature in dataset:
+        if feature[axis]==value:
+            reducedfea=feature[:axis]
+            reducedfea.extend(feature[axis+1:])
+            retdataset.append(reducedfea)
+    return retdataset
+    
+
+#选择最优特征
+def choosebestfea(dataset):
+    feanum=len(dataset[0])-1       #特征数量
+    bestgain=0
+    for axis in range(feanum):
+        fealist=[]
+        tiaojianshang=0
+        jingyanshang=JYshang(dataSet)
+        for data in dataset:
+            fealist.append(data[axis])
+        lenfealist=len(fealist)
+        uniqueVals = set(fealist)
+        for value in uniqueVals:
+            valuecount=fealist.count(value)
+            splitset=splitdataset(dataset,axis,value)
+            tiaojianshang +=valuecount/lenfealist*JYshang(splitset)
+        infogain=jingyanshang-tiaojianshang
+        if infogain>bestgain:
+            bestgain=infogain
+            bestnum=axis
+    return bestnum                #返回信息增益最大的特征的索引值
+
+#统计classlist中出现次数最多的元素
+def majoritycnt(classlist):
+    classcount={}
+    for vote in classlist:
+        if vote not in classcount.keys():
+            classcount[vote]=0
+        classcount[vote] +=1
+        sortedclasscount=sorted(classcount,key=operator.itemgetter(1),reverse=True)
+        return sortedclasscount[0][0]
+    
+#####创建决策树
+def createtree(dataset,lables,featlables):
+    classlist=[fea[-1] for fea in dataset]                   #取最后一列分类标签，放贷或不放贷
+    if classlist.count(classlist[0])==len(classlist):       #如果所有标签都一样
+        return classlist[0]
+    if len(dataset[0])==1 or len(lables)==0:                 #遍历所有特征
+        return majoritycnt(classlist)
+    bestfeanum=choosebestfea(dataset)                        #选择最优特征标签,返回索引值
+    bestfeaname=lables[bestfeanum]                           #获取最优特征标签的值
+    featlables.append(bestfeaname)
+    mytree={bestfeaname:{}}
+    del(lables[bestfeanum])                                  #删除已使用的标签
+    featvalues=[fea[bestfeanum] for fea in dataset]
+    uniquevalues=set(featvalues)
+    for value in uniquevalues:
+        sublables=lables[:]
+        mytree[bestfeaname][value]=createtree(splitdataset(dataset,bestfeanum,value),sublables,featlables)
+    return mytree
+        
+
+def main():
+    HD=JYshang(dataSet)
+    featlables=[]
+    mytree=createtree(dataSet,lables,featlables)
+    print(mytree)
+    
+if __name__=="__main__":
+    main()
+   
