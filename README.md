@@ -1,2 +1,2 @@
 # python3-machine-learining
-一些联系项目
+一些练习项目
