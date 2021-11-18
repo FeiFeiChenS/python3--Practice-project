@@ -1,0 +1,24 @@
+urllib库
+1.当网页是gbk编码时，需要增加制定编码才可以继续解析
+from urllib import request
+req=request.Request(url,headers=headers)
+res=request.urlopen(req)
+
+一些反爬机制
+
+1.禁止查看源码
+1.1禁止右键
+解决办法：F12审查元素
+1.2禁止F12
+解决办法1：地址栏前加上view-sourse：http……
+解决办法2：鼠标移至地址栏，再按F12
+ctr shift +c快捷键直接获取网页的源码，图片的url也可以直接获得
+
+2.动态加载
+在network中可以看到加载的图片，img选项卡
+如果元素链接在网页源码中有，在爬虫/view-sourse返回的代码中没有，说明该链接是动态加载的
+动态加载的链接，一般是合成的，直接搜图片名字去掉后缀的字符
+
+3.referer来路检查
+举例：Referer可以理解为来路，先打开章节URL链接，再打开图片链接。打开图片的时候，Referer的信息里保存的是章节URL。
+站内的用户访问这个图片，我就给他看，从其它地方过来的用户，我就不给他看。
